@@ -2,102 +2,95 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime
 
-# Using session state for data storage instead of SQLite
-if 'content_data' not in st.session_state:
-    st.session_state.content_data = []
-
-# Data operations
-def add_content(title, content):
-    st.session_state.content_data.append({
-        'id': len(st.session_state.content_data) + 1,
-        'title': title,
-        'content': content,
-        'created_date': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    })
-
-def delete_content(id):
-    st.session_state.content_data = [
-        item for item in st.session_state.content_data if item['id'] != id
-    ]
-
 def main():
-    st.set_page_config(page_title="Website Content Manager", layout="wide")
-    
-    # Sidebar navigation
+    st.set_page_config(
+        page_title="Website Content Manager",
+        page_icon="📝",
+        layout="wide"
+    )
+
+    # Header
+    st.title("Website Content Manager 📝")
+    st.markdown("---")
+
+    # Sidebar
     st.sidebar.title("Navigation")
-    page = st.sidebar.radio("Go to", ["Home", "Add Content", "Edit Content", "About", "Contact"])
-    
+    page = st.sidebar.radio("Select Page:", ["Home", "Add Content", "View Content", "Settings"])
+
     if page == "Home":
-        st.title("Welcome to Website Content Manager")
-        st.write("View all your website content here")
+        st.header("Welcome to Website Content Manager!")
+        st.write("This is a simple website content management system.")
         
-        # Display all content
-        for item in st.session_state.content_data:
-            with st.container():
-                st.subheader(item['title'])
-                st.write(item['content'])
-                st.write(f"Created: {item['created_date']}")
-                st.divider()
-    
+        # Some sample metrics
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.metric(label="Total Posts", value="5")
+        with col2:
+            st.metric(label="Active Users", value="3")
+        with col3:
+            st.metric(label="Views", value="150")
+
     elif page == "Add Content":
-        st.title("Add New Content")
+        st.header("Add New Content")
         
-        # Form for adding new content
-        with st.form("new_content"):
+        # Content Form
+        with st.form("content_form"):
             title = st.text_input("Title")
+            category = st.selectbox("Category", ["Blog", "News", "Tutorial"])
             content = st.text_area("Content")
-            submitted = st.form_submit_button("Add Content")
+            publish = st.checkbox("Publish immediately")
             
+            submitted = st.form_submit_button("Submit")
             if submitted:
-                if title and content:
-                    add_content(title, content)
-                    st.success("Content added successfully!")
-                    st.balloons()
-                else:
-                    st.error("Please fill in all fields")
-    
-    elif page == "Edit Content":
-        st.title("Edit/Delete Content")
+                st.success("Content added successfully!")
+                st.balloons()
+
+    elif page == "View Content":
+        st.header("View Content")
         
-        # Display all content with delete buttons
-        if st.session_state.content_data:
-            for item in st.session_state.content_data:
-                with st.expander(f"{item['title']}"):
-                    st.write(item['content'])
-                    st.write(f"Created: {item['created_date']}")
-                    if st.button(f"Delete", key=f"delete_{item['id']}"):
-                        delete_content(item['id'])
-                        st.success("Content deleted!")
-                        st.experimental_rerun()
-        else:
-            st.write("No content available")
-    
-    elif page == "About":
-        st.title("About Us")
-        st.write("""
-        This is a simple content management system built with Streamlit.
-        Use this to manage your website content easily.
-        """)
+        # Sample content table
+        data = {
+            'Title': ['First Post', 'Second Post', 'Third Post'],
+            'Category': ['Blog', 'News', 'Tutorial'],
+            'Date': ['2024-03-11', '2024-03-10', '2024-03-09'],
+            'Status': ['Published', 'Draft', 'Published']
+        }
+        df = pd.DataFrame(data)
         
-    elif page == "Contact":
-        st.title("Contact Us")
-        st.write("""
-        Email: example@email.com
-        Phone: +1234567890
-        """)
+        # Filters
+        col1, col2 = st.columns(2)
+        with col1:
+            category_filter = st.multiselect('Filter by Category', df['Category'].unique())
+        with col2:
+            status_filter = st.multiselect('Filter by Status', df['Status'].unique())
         
-        # Contact form
-        with st.form("contact_form"):
-            name = st.text_input("Your Name")
-            email = st.text_input("Your Email")
-            message = st.text_area("Message")
-            submitted = st.form_submit_button("Send Message")
+        # Apply filters
+        filtered_df = df
+        if category_filter:
+            filtered_df = filtered_df[filtered_df['Category'].isin(category_filter)]
+        if status_filter:
+            filtered_df = filtered_df[filtered_df['Status'].isin(status_filter)]
             
-            if submitted:
-                if name and email and message:
-                    st.success("Message sent successfully!")
-                else:
-                    st.error("Please fill in all fields")
+        st.dataframe(filtered_df, use_container_width=True)
+
+    elif page == "Settings":
+        st.header("Settings")
+        
+        # Settings Form
+        st.subheader("General Settings")
+        site_name = st.text_input("Site Name", "My Website")
+        theme = st.select_slider("Theme", options=["Light", "Dark", "Auto"])
+        
+        st.subheader("Notification Settings")
+        email_notifications = st.toggle("Email Notifications")
+        desktop_notifications = st.toggle("Desktop Notifications")
+        
+        if st.button("Save Settings"):
+            st.success("Settings saved successfully!")
+
+    # Footer
+    st.markdown("---")
+    st.markdown("Made with ❤️ by Muhammad Ismail")
 
 if __name__ == '__main__':
     main()
